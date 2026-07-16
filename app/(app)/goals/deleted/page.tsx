@@ -1,7 +1,10 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { ArrowLeft, Inbox, RotateCcw } from "lucide-react";
 import { apiFetch, AuthError } from "@/lib/api";
 import { restoreGoal } from "@/lib/actions/goals";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import type { Goal } from "@/lib/types";
 
 export default async function DeletedGoalsPage() {
@@ -16,31 +19,43 @@ export default async function DeletedGoalsPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Deleted goals</h1>
-        <Link href="/goals" className="text-sm text-blue-600 underline dark:text-blue-400">
-          Back to goals
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Deleted goals</h1>
+          <p className="text-sm text-muted-foreground">Restore a goal to bring it back to your active list.</p>
+        </div>
+        <Link href="/goals">
+          <Button variant="outline" size="sm">
+            <ArrowLeft className="h-3.5 w-3.5" />
+            Back to goals
+          </Button>
         </Link>
       </div>
 
-      <section className="flex flex-col gap-3">
-        {goals.length === 0 && <p className="text-sm text-gray-500">No deleted goals.</p>}
-        {goals.map((goal) => (
-          <div
-            key={goal.id}
-            className="flex items-center justify-between rounded border border-gray-200 p-4 dark:border-gray-800"
-          >
-            <div className="flex flex-col gap-1">
-              <span className="font-medium">{goal.name}</span>
-              {goal.description && <span className="text-sm text-gray-500">{goal.description}</span>}
-            </div>
-            <form action={restoreGoal.bind(null, goal.id)}>
-              <button type="submit" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                Restore
-              </button>
-            </form>
-          </div>
-        ))}
-      </section>
+      {goals.length === 0 ? (
+        <Card className="flex flex-col items-center gap-3 p-10 text-center">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <Inbox className="h-5 w-5" />
+          </span>
+          <p className="text-sm text-muted-foreground">No deleted goals.</p>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {goals.map((goal) => (
+            <Card key={goal.id} className="flex items-center justify-between gap-4 p-4">
+              <div className="min-w-0">
+                <p className="truncate font-medium">{goal.name}</p>
+                {goal.description && <p className="truncate text-sm text-muted-foreground">{goal.description}</p>}
+              </div>
+              <form action={restoreGoal.bind(null, goal.id)}>
+                <Button type="submit" variant="outline" size="sm">
+                  <RotateCcw className="h-3.5 w-3.5" />
+                  Restore
+                </Button>
+              </form>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }

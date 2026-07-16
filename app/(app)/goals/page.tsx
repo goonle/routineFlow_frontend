@@ -1,8 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { Archive, ChevronRight, ListTodo, Trash2 } from "lucide-react";
 import { apiFetch, AuthError } from "@/lib/api";
 import { createGoal, deleteGoal } from "@/lib/actions/goals";
 import { GoalForm } from "@/components/GoalForm";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
 import type { Goal } from "@/lib/types";
 
 export default async function GoalsPage() {
@@ -17,36 +20,54 @@ export default async function GoalsPage() {
   return (
     <div className="flex flex-col gap-8">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Goals</h1>
-        <Link href="/goals/deleted" className="text-sm text-blue-600 underline dark:text-blue-400">
-          View deleted goals
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Goals</h1>
+          <p className="text-sm text-muted-foreground">Break your goals into tasks you can check off daily.</p>
+        </div>
+        <Link href="/goals/deleted">
+          <Button variant="outline" size="sm">
+            <Archive className="h-3.5 w-3.5" />
+            Deleted
+          </Button>
         </Link>
       </div>
 
-      <section className="max-w-md rounded border border-gray-200 p-4 dark:border-gray-800">
-        <h2 className="mb-3 text-lg font-medium">New goal</h2>
-        <GoalForm action={createGoal} submitLabel="Create goal" resetOnSuccess />
-      </section>
+      <Card className="max-w-md">
+        <CardHeader>
+          <CardTitle>New goal</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <GoalForm action={createGoal} submitLabel="Create goal" resetOnSuccess />
+        </CardContent>
+      </Card>
 
-      <section className="flex flex-col gap-3">
-        {goals.length === 0 && <p className="text-sm text-gray-500">No goals yet — create one above.</p>}
-        {goals.map((goal) => (
-          <div
-            key={goal.id}
-            className="flex items-center justify-between rounded border border-gray-200 p-4 dark:border-gray-800"
-          >
-            <Link href={`/goals/${goal.id}`} className="flex flex-col gap-1">
-              <span className="font-medium hover:underline">{goal.name}</span>
-              {goal.description && <span className="text-sm text-gray-500">{goal.description}</span>}
-            </Link>
-            <form action={deleteGoal.bind(null, goal.id)}>
-              <button type="submit" className="text-sm text-red-600 hover:underline dark:text-red-400">
-                Delete
-              </button>
-            </form>
-          </div>
-        ))}
-      </section>
+      {goals.length === 0 ? (
+        <Card className="flex flex-col items-center gap-3 p-10 text-center">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-foreground">
+            <ListTodo className="h-5 w-5" />
+          </span>
+          <p className="text-sm text-muted-foreground">No goals yet — create one above.</p>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {goals.map((goal) => (
+            <Card key={goal.id} className="flex items-center justify-between gap-4 p-4">
+              <Link href={`/goals/${goal.id}`} className="group flex min-w-0 flex-1 items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="truncate font-medium group-hover:underline">{goal.name}</p>
+                  {goal.description && <p className="truncate text-sm text-muted-foreground">{goal.description}</p>}
+                </div>
+                <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+              </Link>
+              <form action={deleteGoal.bind(null, goal.id)}>
+                <Button type="submit" variant="destructive" size="icon" aria-label="Delete goal">
+                  <Trash2 className="h-4 w-4" />
+                </Button>
+              </form>
+            </Card>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
