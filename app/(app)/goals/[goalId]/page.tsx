@@ -8,11 +8,8 @@ import { completeTask, undoTaskCompletion } from "@/lib/actions/completions";
 import { GoalForm } from "@/components/GoalForm";
 import { TaskForm } from "@/components/TaskForm";
 import { PlanForm } from "@/components/PlanForm";
+import { todayIso } from "@/lib/date";
 import type { Goal, Task, Plan, TaskCompletion } from "@/lib/types";
-
-function todayIso(): string {
-  return new Date().toISOString().slice(0, 10);
-}
 
 export default async function GoalDetailPage({ params }: { params: Promise<{ goalId: string }> }) {
   const { goalId } = await params;
