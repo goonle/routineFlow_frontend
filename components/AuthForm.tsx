@@ -2,6 +2,11 @@
 
 import { useActionState } from "react";
 import Link from "next/link";
+import { Button } from "@/components/ui/Button";
+import { Input } from "@/components/ui/Input";
+import { Label } from "@/components/ui/Label";
+import { FieldError } from "@/components/ui/FieldError";
+import { FormError } from "@/components/ui/FormError";
 import type { AuthActionState } from "@/lib/actions/auth";
 
 type AuthAction = (prev: AuthActionState, formData: FormData) => Promise<AuthActionState>;
@@ -20,58 +25,26 @@ export function AuthForm({
   const [state, formAction, isPending] = useActionState<AuthActionState, FormData>(action, {});
 
   return (
-    <form action={formAction} className="flex w-full max-w-sm flex-col gap-4">
-      {state.error && (
-        <p className="rounded border border-red-300 bg-red-50 px-3 py-2 text-sm text-red-700 dark:border-red-800 dark:bg-red-950 dark:text-red-300" role="alert">
-          {state.error}
-        </p>
-      )}
+    <form action={formAction} className="flex w-full flex-col gap-4">
+      <FormError message={state.error} />
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="email" className="text-sm font-medium">
-          Email
-        </label>
-        <input
-          id="email"
-          name="email"
-          type="email"
-          required
-          className="rounded border border-gray-300 bg-transparent px-3 py-2 dark:border-gray-700"
-        />
-        {state.fieldErrors?.email?.map((msg) => (
-          <p key={msg} className="text-sm text-red-600 dark:text-red-400">
-            {msg}
-          </p>
-        ))}
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="email">Email</Label>
+        <Input id="email" name="email" type="email" autoComplete="email" required />
+        <FieldError messages={state.fieldErrors?.email} />
       </div>
 
-      <div className="flex flex-col gap-1">
-        <label htmlFor="password" className="text-sm font-medium">
-          Password
-        </label>
-        <input
-          id="password"
-          name="password"
-          type="password"
-          required
-          className="rounded border border-gray-300 bg-transparent px-3 py-2 dark:border-gray-700"
-        />
-        {state.fieldErrors?.password?.map((msg) => (
-          <p key={msg} className="text-sm text-red-600 dark:text-red-400">
-            {msg}
-          </p>
-        ))}
+      <div className="flex flex-col gap-1.5">
+        <Label htmlFor="password">Password</Label>
+        <Input id="password" name="password" type="password" autoComplete="current-password" required />
+        <FieldError messages={state.fieldErrors?.password} />
       </div>
 
-      <button
-        type="submit"
-        disabled={isPending}
-        className="rounded bg-gray-900 px-4 py-2 text-white disabled:opacity-50 dark:bg-gray-100 dark:text-gray-900"
-      >
+      <Button type="submit" disabled={isPending} className="mt-2 w-full">
         {isPending ? "Please wait…" : submitLabel}
-      </button>
+      </Button>
 
-      <Link href={altLinkHref} className="text-sm text-blue-600 underline dark:text-blue-400">
+      <Link href={altLinkHref} className="text-center text-sm text-muted-foreground hover:text-foreground hover:underline">
         {altLinkLabel}
       </Link>
     </form>
