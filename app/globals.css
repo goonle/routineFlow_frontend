@@ -21,6 +21,13 @@
   --input: #e4e4e7;
   --ring: #6366f1;
   --radius: 0.75rem;
+
+  /* Weekly-progress ramp: grey (0% achieved) -> gold (100% achieved). */
+  --progress-0: #775945;
+  --progress-1: #a26704;
+  --progress-2: #be7906;
+  --progress-3: #d88b08;
+  --progress-4: #f49d0b;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -44,6 +51,12 @@
     --border: #27272a;
     --input: #27272a;
     --ring: #818cf8;
+
+    --progress-0: #7c6d69;
+    --progress-1: #d18608;
+    --progress-2: #f09a0a;
+    --progress-3: #f7b77c;
+    --progress-4: #fad1b3;
   }
 }
 
@@ -67,6 +80,11 @@
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
+  --color-progress-0: var(--progress-0);
+  --color-progress-1: var(--progress-1);
+  --color-progress-2: var(--progress-2);
+  --color-progress-3: var(--progress-3);
+  --color-progress-4: var(--progress-4);
   --radius-sm: calc(var(--radius) - 6px);
   --radius-md: calc(var(--radius) - 4px);
   --radius-lg: calc(var(--radius) - 2px);

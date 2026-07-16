@@ -71,9 +71,12 @@ export default async function GoalDetailPage({ params }: { params: Promise<{ goa
       <Card>
         <CardContent className="flex flex-col gap-4 p-5">
           <div className="flex items-start justify-between gap-4">
-            <div>
-              <h1 className="text-xl font-semibold tracking-tight">{goal.name}</h1>
-              {goal.description && <p className="mt-1 text-sm text-muted-foreground">{goal.description}</p>}
+            <div className="flex items-start gap-3">
+              <span className="text-2xl leading-none">{goal.emoji}</span>
+              <div>
+                <h1 className="text-xl font-semibold tracking-tight">{goal.name}</h1>
+                {goal.description && <p className="mt-1 text-sm text-muted-foreground">{goal.description}</p>}
+              </div>
             </div>
             <form action={deleteGoal.bind(null, goal.id)}>
               <Button type="submit" variant="destructive" size="sm">
@@ -93,6 +96,7 @@ export default async function GoalDetailPage({ params }: { params: Promise<{ goa
                 action={updateGoal.bind(null, goal.id)}
                 initialName={goal.name}
                 initialDescription={goal.description ?? ""}
+                initialIcon={goal.icon}
                 submitLabel="Save changes"
               />
             </div>

@@ -4,11 +4,13 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { apiFetch, AuthError, ApiProblemError } from "@/lib/api";
+import { GoalIcon } from "@/lib/types";
 import type { FormState, Goal } from "@/lib/types";
 
 const goalSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(200),
   description: z.string().trim().max(2000).optional(),
+  icon: z.coerce.number().int().min(0).max(7).default(GoalIcon.General),
 });
 
 function problemToState(err: ApiProblemError): FormState {
@@ -20,6 +22,7 @@ export async function createGoal(_prev: FormState, formData: FormData): Promise<
   const parsed = goalSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description") || undefined,
+    icon: formData.get("icon") || undefined,
   });
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
@@ -41,6 +44,7 @@ export async function updateGoal(goalId: string, _prev: FormState, formData: For
   const parsed = goalSchema.safeParse({
     name: formData.get("name"),
     description: formData.get("description") || undefined,
+    icon: formData.get("icon") || undefined,
   });
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };

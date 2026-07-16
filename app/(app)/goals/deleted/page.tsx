@@ -42,9 +42,12 @@ export default async function DeletedGoalsPage() {
         <div className="flex flex-col gap-2">
           {goals.map((goal) => (
             <Card key={goal.id} className="flex items-center justify-between gap-4 p-4">
-              <div className="min-w-0">
-                <p className="truncate font-medium">{goal.name}</p>
-                {goal.description && <p className="truncate text-sm text-muted-foreground">{goal.description}</p>}
+              <div className="flex min-w-0 items-center gap-3">
+                <span className="text-xl leading-none">{goal.emoji}</span>
+                <div className="min-w-0">
+                  <p className="truncate font-medium">{goal.name}</p>
+                  {goal.description && <p className="truncate text-sm text-muted-foreground">{goal.description}</p>}
+                </div>
               </div>
               <form action={restoreGoal.bind(null, goal.id)}>
                 <Button type="submit" variant="outline" size="sm">

@@ -52,8 +52,9 @@ export default async function GoalsPage() {
         <div className="flex flex-col gap-2">
           {goals.map((goal) => (
             <Card key={goal.id} className="flex items-center justify-between gap-4 p-4">
-              <Link href={`/goals/${goal.id}`} className="group flex min-w-0 flex-1 items-center justify-between gap-2">
-                <div className="min-w-0">
+              <Link href={`/goals/${goal.id}`} className="group flex min-w-0 flex-1 items-center gap-3">
+                <span className="text-xl leading-none">{goal.emoji}</span>
+                <div className="min-w-0 flex-1">
                   <p className="truncate font-medium group-hover:underline">{goal.name}</p>
                   {goal.description && <p className="truncate text-sm text-muted-foreground">{goal.description}</p>}
                 </div>

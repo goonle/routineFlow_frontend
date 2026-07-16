@@ -44,10 +44,44 @@ export interface AuthTokens {
 
 // ---- Goals ----
 
+export const GoalIcon = {
+  General: 0,
+  Health: 1,
+  Learning: 2,
+  Finance: 3,
+  Career: 4,
+  Creativity: 5,
+  Social: 6,
+  Mindfulness: 7,
+} as const;
+export type GoalIcon = (typeof GoalIcon)[keyof typeof GoalIcon];
+export const GoalIconLabels: Record<GoalIcon, string> = {
+  [GoalIcon.General]: "General",
+  [GoalIcon.Health]: "Health",
+  [GoalIcon.Learning]: "Learning",
+  [GoalIcon.Finance]: "Finance",
+  [GoalIcon.Career]: "Career",
+  [GoalIcon.Creativity]: "Creativity",
+  [GoalIcon.Social]: "Social",
+  [GoalIcon.Mindfulness]: "Mindfulness",
+};
+export const GoalIconEmojis: Record<GoalIcon, string> = {
+  [GoalIcon.General]: "🎯",
+  [GoalIcon.Health]: "🏋️",
+  [GoalIcon.Learning]: "📚",
+  [GoalIcon.Finance]: "💰",
+  [GoalIcon.Career]: "💼",
+  [GoalIcon.Creativity]: "🎨",
+  [GoalIcon.Social]: "👥",
+  [GoalIcon.Mindfulness]: "🧘",
+};
+
 export interface Goal {
   id: string;
   name: string;
   description?: string;
+  icon: GoalIcon;
+  emoji: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
@@ -106,6 +140,8 @@ export interface DailyReport {
 export interface CalendarGoalSummary {
   goalId: string;
   name: string;
+  icon: GoalIcon;
+  emoji: string;
   achieved: boolean;
 }
 

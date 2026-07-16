@@ -7,11 +7,13 @@ import { todayIso, mondayOfThisWeekIso } from "@/lib/date";
 import { Card } from "@/components/ui/Card";
 import { Badge } from "@/components/ui/Badge";
 import { CompletionStepper } from "@/components/CompletionStepper";
+import { WeekProgress } from "@/components/WeekProgress";
 import type { CalendarDay, Task, TaskCompletion } from "@/lib/types";
 
 interface GoalWithTasks {
   goalId: string;
   name: string;
+  emoji: string;
   achieved: boolean;
   tasks: { task: Task; todayCount: number }[];
 }
@@ -76,6 +78,8 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      <WeekProgress days={week} todayStr={today} />
+
       {goalsWithTasks.length === 0 && (
         <Card className="flex flex-col items-center gap-3 p-10 text-center">
           <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-foreground">
@@ -97,7 +101,8 @@ export default async function DashboardPage() {
         {goalsWithTasks.map((goal) => (
           <Card key={goal.goalId} className="p-5">
             <div className="flex items-center justify-between gap-4">
-              <Link href={`/goals/${goal.goalId}`} className="font-medium hover:underline">
+              <Link href={`/goals/${goal.goalId}`} className="flex items-center gap-2 font-medium hover:underline">
+                <span className="text-lg leading-none">{goal.emoji}</span>
                 {goal.name}
               </Link>
               <Badge variant={goal.achieved ? "success" : "muted"}>
