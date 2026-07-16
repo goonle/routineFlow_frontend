@@ -18,3 +18,16 @@ export function mondayOfWeek(date: Date): Date {
 export function mondayOfThisWeekIso(): string {
   return toIsoDate(mondayOfWeek(new Date()));
 }
+
+// Parses a "YYYY-MM-DD" string as a local date, avoiding the UTC-midnight
+// shift that `new Date("YYYY-MM-DD")` introduces in negative-UTC-offset zones.
+export function parseIsoDate(dateStr: string): Date {
+  const [year, month, day] = dateStr.split("-").map(Number);
+  return new Date(year, month - 1, day);
+}
+
+// Monday=0 ... Sunday=6
+export function mondayIndex(date: Date): number {
+  const day = date.getDay();
+  return day === 0 ? 6 : day - 1;
+}
