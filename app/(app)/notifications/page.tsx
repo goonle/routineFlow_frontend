@@ -1,7 +1,11 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
+import { AlertTriangle, Bell, BellOff, Check, CheckCheck, ChevronLeft, ChevronRight } from "lucide-react";
 import { apiFetch, AuthError } from "@/lib/api";
 import { markNotificationRead, markAllNotificationsRead } from "@/lib/actions/notifications";
+import { Card } from "@/components/ui/Card";
+import { Button } from "@/components/ui/Button";
+import { cn } from "@/lib/utils";
 import { NotificationType } from "@/lib/types";
 import type { NotificationListResponse, NotificationResponse } from "@/lib/types";
 
@@ -23,27 +27,27 @@ function parseContent(content: string): Record<string, unknown> | string {
   }
 }
 
-function notificationTypeLabel(type: NotificationResponse["type"]): string {
+function notificationTypeMeta(type: NotificationResponse["type"]): { label: string; icon: typeof Bell } {
   switch (type) {
     case NotificationType.WeeklySummary:
-      return "Weekly summary";
+      return { label: "Weekly summary", icon: Bell };
     case NotificationType.GoalPurgeWarning:
-      return "Goal purge warning";
+      return { label: "Goal purge warning", icon: AlertTriangle };
     default:
-      return "Notification";
+      return { label: "Notification", icon: Bell };
   }
 }
 
 function NotificationContent({ content }: { content: string }) {
   const parsed = parseContent(content);
   if (typeof parsed === "string") {
-    return <p className="text-sm text-gray-600 dark:text-gray-400">{parsed}</p>;
+    return <p className="text-sm text-muted-foreground">{parsed}</p>;
   }
   return (
-    <dl className="mt-1 flex flex-col gap-0.5 text-sm text-gray-600 dark:text-gray-400">
+    <dl className="flex flex-col gap-0.5 text-sm text-muted-foreground">
       {Object.entries(parsed).map(([key, value]) => (
         <div key={key} className="flex gap-2">
-          <dt className="font-medium">{key}:</dt>
+          <dt className="font-medium text-foreground">{key}:</dt>
           <dd>{typeof value === "string" ? value : JSON.stringify(value)}</dd>
         </div>
       ))}
@@ -77,80 +81,109 @@ export default async function NotificationsPage({ searchParams }: NotificationsP
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Notifications</h1>
+      <div className="flex items-center justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight">Notifications</h1>
+          <p className="text-sm text-muted-foreground">Weekly summaries and goal alerts.</p>
+        </div>
         <form action={markAllNotificationsRead}>
-          <button type="submit" className="text-sm text-blue-600 underline dark:text-blue-400">
+          <Button type="submit" variant="outline" size="sm">
+            <CheckCheck className="h-3.5 w-3.5" />
             Mark all read
-          </button>
+          </Button>
         </form>
       </div>
 
-      <div className="flex gap-3 text-sm">
-        <Link href="/notifications" className={!unreadOnly ? "font-semibold underline" : "text-gray-500 hover:underline"}>
+      <div className="flex w-fit items-center gap-1 rounded-lg bg-muted p-1 text-sm">
+        <Link
+          href="/notifications"
+          className={cn(
+            "rounded-md px-3 py-1 font-medium transition-colors",
+            !unreadOnly ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          )}
+        >
           All
         </Link>
         <Link
           href="/notifications?unreadOnly=true"
-          className={unreadOnly ? "font-semibold underline" : "text-gray-500 hover:underline"}
+          className={cn(
+            "rounded-md px-3 py-1 font-medium transition-colors",
+            unreadOnly ? "bg-card text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+          )}
         >
           Unread only
         </Link>
       </div>
 
-      <div className="flex flex-col gap-3">
-        {data.items.length === 0 && <p className="text-sm text-gray-500">No notifications.</p>}
-        {data.items.map((notification) => (
-          <div
-            key={notification.id}
-            className={`rounded border p-4 ${
-              notification.isRead
-                ? "border-gray-200 dark:border-gray-800"
-                : "border-blue-300 bg-blue-50 dark:border-blue-800 dark:bg-blue-950"
-            }`}
-          >
-            <div className="flex items-start justify-between gap-4">
-              <div>
-                <p className="text-xs font-medium uppercase text-gray-500">
-                  {notificationTypeLabel(notification.type)}
-                </p>
-                <NotificationContent content={notification.content} />
-                <p className="mt-1 text-xs text-gray-400">{new Date(notification.createdAt).toLocaleString()}</p>
-              </div>
-              {!notification.isRead && (
-                <form action={markNotificationRead.bind(null, notification.id)}>
-                  <button type="submit" className="text-sm text-blue-600 hover:underline dark:text-blue-400">
-                    Mark read
-                  </button>
-                </form>
-              )}
-            </div>
-          </div>
-        ))}
-      </div>
+      {data.items.length === 0 ? (
+        <Card className="flex flex-col items-center gap-3 p-10 text-center">
+          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-muted text-muted-foreground">
+            <BellOff className="h-5 w-5" />
+          </span>
+          <p className="text-sm text-muted-foreground">No notifications.</p>
+        </Card>
+      ) : (
+        <div className="flex flex-col gap-2">
+          {data.items.map((notification) => {
+            const { label, icon: Icon } = notificationTypeMeta(notification.type);
+            return (
+              <Card
+                key={notification.id}
+                className={cn("flex items-start gap-3 p-4", !notification.isRead && "border-primary/40 bg-accent/30")}
+              >
+                <span
+                  className={cn(
+                    "mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-full",
+                    notification.isRead ? "bg-muted text-muted-foreground" : "bg-primary/10 text-primary"
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                </span>
+                <div className="min-w-0 flex-1">
+                  <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">{label}</p>
+                  <div className="mt-1">
+                    <NotificationContent content={notification.content} />
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">{new Date(notification.createdAt).toLocaleString()}</p>
+                </div>
+                {!notification.isRead && (
+                  <form action={markNotificationRead.bind(null, notification.id)}>
+                    <Button type="submit" variant="ghost" size="sm">
+                      <Check className="h-3.5 w-3.5" />
+                      Mark read
+                    </Button>
+                  </form>
+                )}
+              </Card>
+            );
+          })}
+        </div>
+      )}
 
       {totalPages > 1 && (
         <div className="flex items-center justify-between text-sm">
           <Link
             href={pageHref(Math.max(1, page - 1))}
-            className={
-              page <= 1 ? "pointer-events-none text-gray-300 dark:text-gray-700" : "text-blue-600 underline dark:text-blue-400"
-            }
+            aria-disabled={page <= 1}
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+              page <= 1 && "pointer-events-none opacity-40"
+            )}
           >
-            ← Previous
+            <ChevronLeft className="h-4 w-4" />
           </Link>
-          <span className="text-gray-500">
+          <span className="text-muted-foreground">
             Page {page} of {totalPages}
           </span>
           <Link
             href={pageHref(Math.min(totalPages, page + 1))}
-            className={
-              page >= totalPages
-                ? "pointer-events-none text-gray-300 dark:text-gray-700"
-                : "text-blue-600 underline dark:text-blue-400"
-            }
+            aria-disabled={page >= totalPages}
+            className={cn(
+              "flex h-8 w-8 items-center justify-center rounded-md border border-border text-muted-foreground transition-colors hover:bg-muted hover:text-foreground",
+              page >= totalPages && "pointer-events-none opacity-40"
+            )}
           >
-            Next →
+            <ChevronRight className="h-4 w-4" />
           </Link>
         </div>
       )}
