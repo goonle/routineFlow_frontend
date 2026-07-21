@@ -8,6 +8,7 @@ import { Label } from "@/components/ui/Label";
 import { FieldError } from "@/components/ui/FieldError";
 import { FormError } from "@/components/ui/FormError";
 import type { FormState } from "@/lib/types";
+import { cn } from "@/lib/utils";
 
 type TaskFormAction = (prev: FormState, formData: FormData) => Promise<FormState>;
 
@@ -18,6 +19,8 @@ export function TaskForm({
   initialAchieveAction = "",
   submitLabel = "Save",
   resetOnSuccess = false,
+  onSuccessAction,
+  onCancelAction,
 }: {
   action: TaskFormAction;
   initialName?: string;
@@ -25,6 +28,8 @@ export function TaskForm({
   initialAchieveAction?: string;
   submitLabel?: string;
   resetOnSuccess?: boolean;
+  onSuccessAction?: () => void;
+  onCancelAction?: () => void;
 }) {
   const [state, formAction, isPending] = useActionState<FormState, FormData>(action, {});
   const formRef = useRef<HTMLFormElement>(null);
@@ -35,8 +40,9 @@ export function TaskForm({
     if (succeeded && resetOnSuccess) {
       formRef.current?.reset();
     }
+    if (succeeded) onSuccessAction?.();
     wasPending.current = isPending;
-  }, [isPending, state, resetOnSuccess]);
+  }, [isPending, state, resetOnSuccess, onSuccessAction]);
 
   return (
     <form ref={formRef} action={formAction} className="flex flex-col gap-4">
@@ -66,9 +72,16 @@ export function TaskForm({
         <FieldError messages={state.fieldErrors?.achieveAction} />
       </div>
 
-      <Button type="submit" disabled={isPending} size="sm" className="self-start">
-        {isPending ? "Saving…" : submitLabel}
-      </Button>
+      <div className={cn("flex gap-2", onCancelAction ? "flex-row" : "flex-row-reverse")}>
+        {onCancelAction && (
+          <Button type="button" variant="outline" className="flex-1" onClick={onCancelAction}>
+            Cancel
+          </Button>
+        )}
+        <Button type="submit" disabled={isPending} className={onCancelAction ? "flex-1" : undefined}>
+          {isPending ? "Saving…" : submitLabel}
+        </Button>
+      </div>
     </form>
   );
 }

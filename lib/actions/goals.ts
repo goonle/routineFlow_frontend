@@ -4,13 +4,14 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { apiFetch, AuthError, ApiProblemError } from "@/lib/api";
-import { GoalIcon } from "@/lib/types";
+import { GoalColor, GoalIcon } from "@/lib/types";
 import type { FormState, Goal } from "@/lib/types";
 
 const goalSchema = z.object({
   name: z.string().trim().min(1, "Name is required").max(200),
   description: z.string().trim().max(2000).optional(),
-  icon: z.coerce.number().int().min(0).max(7).default(GoalIcon.General),
+  icon: z.coerce.number().int().min(0).max(19).default(GoalIcon.General),
+  color: z.coerce.number().int().min(0).max(9).default(GoalColor.Red),
 });
 
 function problemToState(err: ApiProblemError): FormState {
@@ -23,6 +24,7 @@ export async function createGoal(_prev: FormState, formData: FormData): Promise<
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     icon: formData.get("icon") || undefined,
+    color: formData.get("color") || undefined,
   });
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };
@@ -45,6 +47,7 @@ export async function updateGoal(goalId: string, _prev: FormState, formData: For
     name: formData.get("name"),
     description: formData.get("description") || undefined,
     icon: formData.get("icon") || undefined,
+    color: formData.get("color") || undefined,
   });
   if (!parsed.success) {
     return { fieldErrors: parsed.error.flatten().fieldErrors };

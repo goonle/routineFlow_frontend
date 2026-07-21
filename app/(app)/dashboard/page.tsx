@@ -1,14 +1,13 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
-import { CheckCircle2, Circle, Sparkles } from "lucide-react";
-import { apiFetch, AuthError } from "@/lib/api";
-import { completeTask, undoTaskCompletion } from "@/lib/actions/completions";
+import { apiFetch, AuthError, ApiProblemError } from "@/lib/api";
+import { upsertDailyReport } from "@/lib/actions/daily-reports";
 import { todayIso, mondayOfThisWeekIso } from "@/lib/date";
-import { Card } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { CompletionStepper } from "@/components/CompletionStepper";
+import { TodayProgress } from "@/components/TodayProgress";
 import { WeekProgress } from "@/components/WeekProgress";
-import type { CalendarDay, Task, TaskCompletion } from "@/lib/types";
+import { TodayRoutine } from "@/components/TodayRoutine";
+import { TodayJournalForm } from "@/components/TodayJournalForm";
+import { Card } from "@/components/ui/Card";
+import type { CalendarDay, DailyReport, Task, TaskCompletion } from "@/lib/types";
 
 interface GoalWithTasks {
   goalId: string;
@@ -58,75 +57,34 @@ export default async function DashboardPage() {
     goalsWithTasks.push({ ...summary, tasks: tasksWithCounts });
   }
 
-  const achievedCount = goalsWithTasks.filter((g) => g.achieved).length;
-  const todayLabel = new Date().toLocaleDateString(undefined, { weekday: "long", month: "long", day: "numeric" });
+  let todayReport: DailyReport | null = null;
+  try {
+    todayReport = await apiFetch<DailyReport>(`/api/daily-reports/${today}`);
+  } catch (err) {
+    if (err instanceof AuthError) redirect("/login");
+    if (!(err instanceof ApiProblemError && err.status === 404)) throw err;
+  }
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold tracking-tight">Today</h1>
-          <p className="text-sm text-muted-foreground">{todayLabel}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          {todayEntry?.emoji && <span className="text-2xl leading-none">{todayEntry.emoji}</span>}
-          {goalsWithTasks.length > 0 && (
-            <Badge variant={achievedCount === goalsWithTasks.length ? "success" : "muted"} className="h-fit">
-              {achievedCount}/{goalsWithTasks.length} achieved
-            </Badge>
-          )}
-        </div>
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <TodayProgress goals={goalSummaries} />
+        <WeekProgress days={week} todayStr={today} />
       </div>
 
-      <WeekProgress days={week} todayStr={today} />
+      <div className="grid grid-cols-1 items-start gap-6 lg:grid-cols-2">
+        <TodayRoutine goals={goalsWithTasks} />
 
-      {goalsWithTasks.length === 0 && (
-        <Card className="flex flex-col items-center gap-3 p-10 text-center">
-          <span className="flex h-10 w-10 items-center justify-center rounded-full bg-accent text-accent-foreground">
-            <Sparkles className="h-5 w-5" />
-          </span>
-          <div>
-            <p className="font-medium">No goals yet</p>
-            <p className="text-sm text-muted-foreground">
-              <Link href="/goals" className="text-primary hover:underline">
-                Create a goal
-              </Link>{" "}
-              to see it here.
-            </p>
+        <Card className="p-5">
+          <h2 className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">Today&apos;s journal</h2>
+          <div className="mt-4">
+            <TodayJournalForm
+              action={upsertDailyReport.bind(null, today)}
+              initialEmotion={todayReport?.emotion}
+              initialDiaryText={todayReport?.diaryText ?? ""}
+            />
           </div>
         </Card>
-      )}
-
-      <div className="flex flex-col gap-3">
-        {goalsWithTasks.map((goal) => (
-          <Card key={goal.goalId} className="p-5">
-            <div className="flex items-center justify-between gap-4">
-              <Link href={`/goals/${goal.goalId}`} className="flex items-center gap-2 font-medium hover:underline">
-                <span className="text-lg leading-none">{goal.emoji}</span>
-                {goal.name}
-              </Link>
-              <Badge variant={goal.achieved ? "success" : "muted"}>
-                {goal.achieved ? <CheckCircle2 className="h-3.5 w-3.5" /> : <Circle className="h-3.5 w-3.5" />}
-                {goal.achieved ? "Achieved" : "Not yet"}
-              </Badge>
-            </div>
-
-            {goal.tasks.length === 0 && <p className="mt-2 text-sm text-muted-foreground">No tasks for this goal.</p>}
-
-            <div className="mt-3 flex flex-col divide-y divide-border">
-              {goal.tasks.map(({ task, todayCount }) => (
-                <div key={task.id} className="flex items-center justify-between py-2 text-sm first:pt-0 last:pb-0">
-                  <span>{task.name}</span>
-                  <CompletionStepper
-                    count={todayCount}
-                    onIncrementAction={completeTask.bind(null, goal.goalId, task.id)}
-                    onDecrementAction={undoTaskCompletion.bind(null, goal.goalId, task.id, today)}
-                  />
-                </div>
-              ))}
-            </div>
-          </Card>
-        ))}
       </div>
     </div>
   );

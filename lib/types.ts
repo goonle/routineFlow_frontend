@@ -44,6 +44,8 @@ export interface AuthTokens {
 
 // ---- Goals ----
 
+// Values are appended-only to match the backend enum — never reorder, since
+// existing goals store this as a plain int.
 export const GoalIcon = {
   General: 0,
   Health: 1,
@@ -53,6 +55,18 @@ export const GoalIcon = {
   Creativity: 5,
   Social: 6,
   Mindfulness: 7,
+  Fitness: 8,
+  Nutrition: 9,
+  Hydration: 10,
+  Motivation: 11,
+  Writing: 12,
+  Technology: 13,
+  Music: 14,
+  Celebration: 15,
+  Teamwork: 16,
+  Travel: 17,
+  Nature: 18,
+  Energy: 19,
 } as const;
 export type GoalIcon = (typeof GoalIcon)[keyof typeof GoalIcon];
 export const GoalIconLabels: Record<GoalIcon, string> = {
@@ -64,6 +78,18 @@ export const GoalIconLabels: Record<GoalIcon, string> = {
   [GoalIcon.Creativity]: "Creativity",
   [GoalIcon.Social]: "Social",
   [GoalIcon.Mindfulness]: "Mindfulness",
+  [GoalIcon.Fitness]: "Fitness",
+  [GoalIcon.Nutrition]: "Nutrition",
+  [GoalIcon.Hydration]: "Hydration",
+  [GoalIcon.Motivation]: "Motivation",
+  [GoalIcon.Writing]: "Writing",
+  [GoalIcon.Technology]: "Technology",
+  [GoalIcon.Music]: "Music",
+  [GoalIcon.Celebration]: "Celebration",
+  [GoalIcon.Teamwork]: "Teamwork",
+  [GoalIcon.Travel]: "Travel",
+  [GoalIcon.Nature]: "Nature",
+  [GoalIcon.Energy]: "Energy",
 };
 export const GoalIconEmojis: Record<GoalIcon, string> = {
   [GoalIcon.General]: "🎯",
@@ -74,6 +100,56 @@ export const GoalIconEmojis: Record<GoalIcon, string> = {
   [GoalIcon.Creativity]: "🎨",
   [GoalIcon.Social]: "👥",
   [GoalIcon.Mindfulness]: "🧘",
+  [GoalIcon.Fitness]: "🏃",
+  [GoalIcon.Nutrition]: "🥗",
+  [GoalIcon.Hydration]: "💧",
+  [GoalIcon.Motivation]: "🤩",
+  [GoalIcon.Writing]: "✏️",
+  [GoalIcon.Technology]: "💻",
+  [GoalIcon.Music]: "🎵",
+  [GoalIcon.Celebration]: "🎉",
+  [GoalIcon.Teamwork]: "🤝",
+  [GoalIcon.Travel]: "✈️",
+  [GoalIcon.Nature]: "🌱",
+  [GoalIcon.Energy]: "⚡",
+};
+
+export const GoalColor = {
+  Red: 0,
+  Orange: 1,
+  Yellow: 2,
+  Green: 3,
+  Sky: 4,
+  Blue: 5,
+  Purple: 6,
+  Pink: 7,
+  Brown: 8,
+  Teal: 9,
+} as const;
+export type GoalColor = (typeof GoalColor)[keyof typeof GoalColor];
+export const GoalColorLabels: Record<GoalColor, string> = {
+  [GoalColor.Red]: "Red",
+  [GoalColor.Orange]: "Orange",
+  [GoalColor.Yellow]: "Yellow",
+  [GoalColor.Green]: "Green",
+  [GoalColor.Sky]: "Sky",
+  [GoalColor.Blue]: "Blue",
+  [GoalColor.Purple]: "Purple",
+  [GoalColor.Pink]: "Pink",
+  [GoalColor.Brown]: "Brown",
+  [GoalColor.Teal]: "Teal",
+};
+export const GoalColorHex: Record<GoalColor, string> = {
+  [GoalColor.Red]: "#ef4444",
+  [GoalColor.Orange]: "#f97316",
+  [GoalColor.Yellow]: "#eab308",
+  [GoalColor.Green]: "#22c55e",
+  [GoalColor.Sky]: "#0ea5e9",
+  [GoalColor.Blue]: "#3b82f6",
+  [GoalColor.Purple]: "#a855f7",
+  [GoalColor.Pink]: "#ec4899",
+  [GoalColor.Brown]: "#92400e",
+  [GoalColor.Teal]: "#14b8a6",
 };
 
 export interface Goal {
@@ -82,6 +158,8 @@ export interface Goal {
   description?: string;
   icon: GoalIcon;
   emoji: string;
+  color: GoalColor;
+  colorHex: string;
   createdAt: string;
   updatedAt: string;
   deletedAt?: string;
@@ -142,6 +220,8 @@ export interface CalendarGoalSummary {
   name: string;
   icon: GoalIcon;
   emoji: string;
+  color: GoalColor;
+  colorHex: string;
   achieved: boolean;
 }
 

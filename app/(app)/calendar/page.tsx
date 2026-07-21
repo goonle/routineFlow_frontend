@@ -3,11 +3,14 @@ import { redirect } from "next/navigation";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { apiFetch, AuthError, ApiProblemError } from "@/lib/api";
 import { upsertDailyReport } from "@/lib/actions/daily-reports";
-import { DailyReportForm } from "@/components/DailyReportForm";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/Card";
+import { ActionStatsByGoal } from "@/components/ActionStatsByGoal";
+import type { GoalActionStats, TaskActionStat } from "@/components/ActionStatsByGoal";
+import { DayDetailModal } from "@/components/DayDetailModal";
+import type { CompletedGoalActions } from "@/components/DayDetailModal";
 import { cn } from "@/lib/utils";
-import { todayIso, toIsoDate, parseIsoDate, mondayIndex, mondayOfThisWeekIso } from "@/lib/date";
-import type { CalendarDay, DailyReport } from "@/lib/types";
+import { todayIso, toIsoDate, parseIsoDate, mondayIndex, mondayOfWeek, mondayOfThisWeekIso } from "@/lib/date";
+import { EmotionLabels, PlanType } from "@/lib/types";
+import type { CalendarDay, DailyReport, Goal, Plan, Task, TaskCompletion } from "@/lib/types";
 
 type ViewMode = "weekly" | "monthly";
 
@@ -42,6 +45,94 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
     throw err;
   }
 
+  let goals: Goal[];
+  try {
+    goals = await apiFetch<Goal[]>("/api/goals");
+  } catch (err) {
+    if (err instanceof AuthError) redirect("/login");
+    throw err;
+  }
+
+  const goalsWithTasks: { goal: Goal; tasks: Task[]; plan: Plan | null }[] = [];
+  for (const goal of goals) {
+    let tasks: Task[];
+    try {
+      tasks = await apiFetch<Task[]>(`/api/goals/${goal.id}/tasks`);
+    } catch (err) {
+      if (err instanceof AuthError) redirect("/login");
+      throw err;
+    }
+
+    let plan: Plan | null;
+    try {
+      plan = await apiFetch<Plan>(`/api/goals/${goal.id}/plan`);
+    } catch (err) {
+      if (err instanceof AuthError) redirect("/login");
+      if (err instanceof ApiProblemError && err.status === 404) {
+        plan = null;
+      } else {
+        throw err;
+      }
+    }
+
+    goalsWithTasks.push({ goal, tasks, plan });
+  }
+
+  // A task's progress is tracked against its goal's Plan for the *current* cycle
+  // (this week / this month / the plan's custom range) — not the calendar's
+  // currently displayed range, which may show a different week or month.
+  const rangeFallback = days.length > 0 ? { start: days[0].date, end: days[days.length - 1].date } : null;
+  const today = new Date();
+
+  function resolveTrackingPeriod(plan: Plan | null): { start: string | null; end: string | null; target: number | null } {
+    if (plan) {
+      if (plan.type === PlanType.Weekly) {
+        const start = mondayOfWeek(today);
+        const end = new Date(start);
+        end.setDate(end.getDate() + 6);
+        return { start: toIsoDate(start), end: toIsoDate(end), target: plan.repeatCount };
+      }
+      if (plan.type === PlanType.Monthly) {
+        const start = new Date(today.getFullYear(), today.getMonth(), 1);
+        const end = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        return { start: toIsoDate(start), end: toIsoDate(end), target: plan.repeatCount };
+      }
+      if (plan.type === PlanType.Custom && plan.startDate && plan.endDate) {
+        return { start: plan.startDate, end: plan.endDate, target: plan.repeatCount };
+      }
+    }
+    return { start: rangeFallback?.start ?? null, end: rangeFallback?.end ?? null, target: null };
+  }
+
+  const goalStats: GoalActionStats[] = [];
+  for (const { goal, tasks, plan } of goalsWithTasks) {
+    const { start: periodStart, end: periodEnd, target } = resolveTrackingPeriod(plan);
+
+    const taskStats: TaskActionStat[] = [];
+    for (const task of tasks) {
+      let daysCompleted = 0;
+      if (periodStart && periodEnd) {
+        let completions: TaskCompletion[];
+        try {
+          completions = await apiFetch<TaskCompletion[]>(
+            `/api/tasks/${task.id}/completions?from=${periodStart}&to=${periodEnd}`
+          );
+        } catch (err) {
+          if (err instanceof AuthError) redirect("/login");
+          throw err;
+        }
+        daysCompleted = completions.length;
+      }
+      taskStats.push({ task, daysCompleted, target: periodStart && periodEnd ? target : null });
+    }
+
+    goalStats.push({
+      goal,
+      totalCompletedDays: taskStats.reduce((sum, t) => sum + t.daysCompleted, 0),
+      tasks: taskStats,
+    });
+  }
+
   let editingReport: DailyReport | null = null;
   if (params.editDate) {
     try {
@@ -53,6 +144,26 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       } else {
         throw err;
       }
+    }
+  }
+
+  const completedGoalsForEditDate: CompletedGoalActions[] = [];
+  if (params.editDate) {
+    for (const { goal, tasks } of goalsWithTasks) {
+      const completedTasks: Task[] = [];
+      for (const task of tasks) {
+        let completions: TaskCompletion[];
+        try {
+          completions = await apiFetch<TaskCompletion[]>(
+            `/api/tasks/${task.id}/completions?from=${params.editDate}&to=${params.editDate}`
+          );
+        } catch (err) {
+          if (err instanceof AuthError) redirect("/login");
+          throw err;
+        }
+        if ((completions[0]?.count ?? 0) > 0) completedTasks.push(task);
+      }
+      if (completedTasks.length > 0) completedGoalsForEditDate.push({ goal, tasks: completedTasks });
     }
   }
 
@@ -94,6 +205,18 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
       const d = parseIsoDate(weekStart);
       d.setDate(d.getDate() + direction * 7);
       sp.set("date", toIsoDate(d));
+    }
+    return `/calendar?${sp.toString()}`;
+  }
+
+  function closeHref(): string {
+    const sp = new URLSearchParams();
+    sp.set("view", view);
+    if (view === "monthly") {
+      sp.set("year", String(year));
+      sp.set("month", String(month));
+    } else {
+      sp.set("date", weekStart);
     }
     return `/calendar?${sp.toString()}`;
   }
@@ -200,20 +323,27 @@ export default async function CalendarPage({ searchParams }: CalendarPageProps) 
         })}
       </div>
 
-      {params.editDate && (
-        <Card className="max-w-md">
-          <CardHeader>
-            <CardTitle>{params.editDate}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <DailyReportForm
-              action={upsertDailyReport.bind(null, params.editDate)}
-              initialEmotion={editingReport?.emotion}
-              initialDiaryText={editingReport?.diaryText ?? ""}
-            />
-          </CardContent>
-        </Card>
-      )}
+      <ActionStatsByGoal stats={goalStats} />
+
+      <DayDetailModal
+        open={Boolean(params.editDate)}
+        closeHref={closeHref()}
+        dateLabel={
+          params.editDate
+            ? parseIsoDate(params.editDate).toLocaleDateString(undefined, {
+                month: "long",
+                day: "numeric",
+                weekday: "long",
+              })
+            : ""
+        }
+        emotionEmoji={editingReport?.emoji}
+        emotionLabel={editingReport?.emotion !== undefined ? EmotionLabels[editingReport.emotion] : undefined}
+        diaryText={editingReport?.diaryText}
+        completedGoals={completedGoalsForEditDate}
+        reportAction={upsertDailyReport.bind(null, params.editDate ?? todayStr)}
+        initialEmotion={editingReport?.emotion}
+      />
     </div>
   );
 }

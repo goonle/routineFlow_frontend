@@ -97,6 +97,7 @@ export default async function GoalDetailPage({ params }: { params: Promise<{ goa
                 initialName={goal.name}
                 initialDescription={goal.description ?? ""}
                 initialIcon={goal.icon}
+                initialColor={goal.color}
                 submitLabel="Save changes"
               />
             </div>
